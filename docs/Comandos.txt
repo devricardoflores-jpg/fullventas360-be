@@ -1,0 +1,82 @@
+
+----------------------
+php artisan route:clear
+php artisan optimize:clear
+php artisan route:list
+
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan optimize:clear
+
+---------------------
+LISTAR: php artisan route:list
+
+
+php artisan ls_swagger:generate
+php artisan l5-swagger:generate
+clear
+
+
+php artisan optimize:clear
+php artisan l5-swagger:generate
+
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+
+
+3. Limpiar caché Composer y Laravel
+
+Ejecuta:
+
+composer dump-autoload
+
+Luego:
+
+php artisan optimize:clear
+
+Publicar Sanctum
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+php artisan migrate
+
+composer show laravel/sanctum
+---------------
+1. Elimina esta migración
+
+Ve a:
+
+database/migrations/
+
+y elimina:
+
+0001_01_01_000000_create_users_table.php
+2. También elimina si existen
+0001_01_01_000001_create_cache_table.php
+0001_01_01_000002_create_jobs_table.php
+
+(si no los usarás)
+
+3. Mantén solamente
+
+La migración de Sanctum:
+
+create_personal_access_tokens_table.php
+4. Ejecuta nuevamente
+php artisan migrate
+---------------------------
+
+actuyalizar el password:
+
+PS C:\xampp\htdocs\laravel\ProVentas\fullventas_api> php artisan tinker
+Psy Shell v0.12.22 (PHP 8.2.12 — cli) by Justin Hileman
+New PHP manual is available (latest: 3.0.5). Update with `doc --update-manual`
+
+> Hash::make('123456')                                                                                                   
+
+= "\$2y\$12\$fgM3CHPdokbk6oNiB0Sn4OSg5/FK1XGC5sEnrRFXwcmcC2pdw/E4K"
+
+>   
+UPDATE users
+SET password = '\$2y\$12\$fgM3CHPdokbk6oNiB0Sn4OSg5/FK1XGC5sEnrRFXwcmcC2pdw/E4K'
+WHERE email = 'admin@gmail.com';       
