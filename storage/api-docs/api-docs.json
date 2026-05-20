@@ -483,7 +483,7 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Eliminar producto",
+                "summary": "Eliminar producto lógico",
                 "operationId": "b49ce9f3cb168b233245548fb4ef36d3",
                 "responses": {
                     "200": {
