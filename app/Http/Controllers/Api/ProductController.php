@@ -14,6 +14,8 @@ use Picqer\Barcode\BarcodeGeneratorPNG;
 use Illuminate\Support\Facades\File;
 use OpenApi\Attributes as OA;
 
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 
 #[OA\Tag(
     name: "Products",
@@ -22,23 +24,31 @@ use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
-     #[OA\Get(
-        path: "/api/products",
-        summary: "Listar productos",
-        tags: ["Products"],
-        responses: [
-            new OA\Response(response: 200, description: "OK")
-        ]
-    )]
-    public function index()
-    {
-        $products = Product::with('images')->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $products
-        ]);
-    }
+#[OA\Get(
+    path: "/api/products",
+    summary: "Listar productos",
+    tags: ["Products"],
+    responses: [
+        new OA\Response(response: 200, description: "OK")
+    ]
+)]
+public function index()
+{
+    $products = Product::with([
+        'images',
+        'category',
+        'user'
+    ])
+    ->where('status', 1)
+    ->orderBy('id', 'desc')
+    ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $products
+    ]);
+}
 
     #[OA\Post(
         path: "/api/products",
@@ -79,41 +89,46 @@ class ProductController extends Controller
         /* ===================== CREAR CARPETAS ===================== */
        // Storage::disk('public')->makeDirectory('products/barcode');
         //Storage::disk('public')->makeDirectory('products/qrcode');
-        File::ensureDirectoryExists(storage_path('app/public/products/qrcode'));
-        File::ensureDirectoryExists(storage_path('app/public/products/barcode'));
+       $barcodeDir = storage_path('app/public/products/barcode');
+        $qrcodeDir = storage_path('app/public/products/qrcode');
 
+        File::ensureDirectoryExists($barcodeDir);
+        File::ensureDirectoryExists($qrcodeDir);
         /* ===================== BARCODE ===================== */
-        $barcodeGenerator = new BarcodeGeneratorPNG();
+         $generator = new BarcodeGeneratorPNG();
 
-        $barcode = $barcodeGenerator->getBarcode(
+        $barcode = $generator->getBarcode(
             (string) $product->id,
-            $barcodeGenerator::TYPE_CODE_128
+            $generator::TYPE_CODE_128
         );
 
-        $barcodePath = "products/barcode/{$product->id}.png";
-        $barcodeFullPath = storage_path("app/public/{$barcodePath}");
+        $barcodeFileName = $product->id . '.png';
 
-        File::ensureDirectoryExists(dirname($barcodeFullPath));
+        $barcodeFullPath = $barcodeDir . '/' . $barcodeFileName;
 
         file_put_contents($barcodeFullPath, $barcode);
-        /* ===================== QR CODE ===================== */
-        $qrPath = "products/qrcode/{$product->id}.png";
 
-       $qrFullPath = storage_path("app/public/products/qrcode/{$product->id}.png");
+        /* ===================== GENERAR QR ===================== */
 
-        if (!File::exists(dirname($qrFullPath))) {
-            File::makeDirectory(dirname($qrFullPath), 0777, true, true);
-        }
+ 
+        $qrFileName = $product->id . '.png';
 
-        QrCode::format('png')
+        $qrFullPath = $qrcodeDir . '/' . $qrFileName;
+
+        $result = Builder::create()
+            ->writer(new PngWriter())
+            ->data((string) $product->id)
             ->size(300)
-            ->errorCorrection('H')
-            ->generate((string) $product->id, $qrFullPath);
+            ->margin(10)
+            ->build();
 
-        /* ===================== UPDATE ===================== */
+        $result->saveToFile($qrFullPath);
+
+        /* ===================== GUARDAR RUTAS ===================== */
+
         $product->update([
-            'barcode' => $barcodePath,
-            'qrcode' => $qrPath
+            'barcode' => 'storage/products/barcode/' . $barcodeFileName,
+            'qrcode' => 'storage/products/qrcode/' . $qrFileName
         ]);
 
         return response()->json([
@@ -126,7 +141,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => false,
-            'error' => $e->getMessage()
+            'message' => $e->getMessage()
         ], 500);
     }
 }
@@ -168,6 +183,8 @@ class ProductController extends Controller
     )]
     public function update(Request $request, $id)
     {
+         try {
+
         $product = Product::find($id);
 
         if (!$product) {
@@ -188,22 +205,111 @@ class ProductController extends Controller
             'update_at' => time()
         ]);
 
+        /* ===================== CARPETAS ===================== */
+
+        $barcodeDir = storage_path('app/public/products/barcode');
+        $qrcodeDir = storage_path('app/public/products/qrcode');
+
+        File::ensureDirectoryExists($barcodeDir);
+        File::ensureDirectoryExists($qrcodeDir);
+
+        /* ===================== GENERAR BARCODE ===================== */
+
+        $generator = new BarcodeGeneratorPNG();
+
+        $barcode = $generator->getBarcode(
+            (string) $product->id,
+            $generator::TYPE_CODE_128
+        );
+
+        $barcodeFileName = $product->id . '.png';
+
+        $barcodeFullPath = $barcodeDir . '/' . $barcodeFileName;
+
+        file_put_contents($barcodeFullPath, $barcode);
+
+        /* ===================== GENERAR QRCODE ===================== */
+
+        $qrFileName = $product->id . '.png';
+
+        $qrFullPath = $qrcodeDir . '/' . $qrFileName;
+
+        $result = Builder::create()
+            ->writer(new PngWriter())
+            ->data((string) $product->id)
+            ->size(300)
+            ->margin(10)
+            ->build();
+
+        $result->saveToFile($qrFullPath);
+
+        /* ===================== GUARDAR RUTAS ===================== */
+
+        $product->update([
+            'barcode' => 'storage/products/barcode/' . $barcodeFileName,
+            'qrcode' => 'storage/products/qrcode/' . $qrFileName
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Producto actualizado',
+            'message' => 'Producto actualizado correctamente',
             'data' => $product
-        ]);
-    }
+        ], 200);
 
-    #[OA\Delete(
-        path: "/api/products/{id}",
-        summary: "Eliminar producto",
-        tags: ["Products"],
-        responses: [
-            new OA\Response(response: 200, description: "Eliminado"),
-            new OA\Response(response: 404, description: "No encontrado")
-        ]
-    )]
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+  #[OA\Delete(
+    path: "/api/products/{id}",
+    summary: "Eliminar producto lógico",
+    tags: ["Products"],
+    responses: [
+        new OA\Response(response: 200, description: "Eliminado"),
+        new OA\Response(response: 404, description: "No encontrado")
+    ]
+)]
+
+    public function destroy($id)
+{
+    try {
+
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Producto no encontrado'
+            ], 404);
+        }
+
+        /* ===================== ELIMINADO LÓGICO ===================== */
+
+        $product->update([
+            'status' => 0
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Producto eliminado correctamente',
+            'data' => $product
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+ }
+    /*
     public function destroy($id)
     {
         $product = Product::find($id);
@@ -222,4 +328,5 @@ class ProductController extends Controller
             'message' => 'Producto eliminado'
         ]);
     }
+        */
 }

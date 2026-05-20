@@ -1,0 +1,8 @@
+composer require picqer/php-barcode-generator
+composer require simplesoftwareio/simple-qrcode
+
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
+
+
+ php artisan l5-swagger:generate  

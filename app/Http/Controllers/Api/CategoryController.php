@@ -209,54 +209,66 @@ class CategoryController extends Controller
     )]
     public function update(Request $request, string $id)
     {
-                Log::info(__METHOD__, [
-                'file' => __FILE__,
-                'line' => __LINE__,
-                'message' => 'CATEGORY - Actualizar categoría',
-                'id' => $id,
-                'request' => $request->all()
-            ]);
+                 try {
 
-            $category = Category::find($id);
+        Log::info(__METHOD__, [
+            'message' => 'CATEGORY - Actualizar categoría',
+            'id' => $id,
+            'request' => $request->all()
+        ]);
 
-            if (!$category) {
+        $category = Category::find($id);
 
-                Log::warning(__METHOD__, [
-                    'file' => __FILE__,
-                    'line' => __LINE__,
-                    'message' => 'CATEGORY - Categoría no encontrada update',
-                    'id' => $id
-                ]);
+        if (!$category) {
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Categoría no encontrada'
-                ], 404);
-            }
-
-            $request->validate([
-                'name' => 'required|max:255',
-                'description' => 'required|max:255'
-            ]);
-
-            $category->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'update_at' => time()
-            ]);
-
-            Log::info(__METHOD__, [
-                'file' => __FILE__,
-                'line' => __LINE__,
-                'message' => 'CATEGORY - Categoría actualizada',
+            Log::warning(__METHOD__, [
+                'message' => 'CATEGORY - Categoría no encontrada update',
                 'id' => $id
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Categoría actualizada correctamente',
-                'data' => $category
-            ], 200);
+                'success' => false,
+                'message' => 'Categoría no encontrada'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'description' => 'required|max:255'
+        ]);
+
+        $category->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'update_at' => time() // si tu campo es BIGINT
+        ]);
+
+        Log::info(__METHOD__, [
+            'message' => 'CATEGORY - Categoría actualizada',
+            'id' => $id
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Categoría actualizada correctamente',
+             'data' => $category->fresh()
+        ], 200);
+
+    } catch (\Throwable $e) {
+
+        Log::error('CATEGORY - Error en update', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error interno del servidor',
+            'error' => $e->getMessage() // puedes quitar esto en producción
+        ], 500);
+    }
     }
 
     #[OA\Delete(
