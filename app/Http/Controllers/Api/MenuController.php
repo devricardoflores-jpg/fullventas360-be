@@ -38,19 +38,31 @@ class MenuController extends Controller
 
     public function index(Request $request)
     {
-
-        $user = auth()->user();
-
+         $user = auth()->user();
         $menus = $user->role
-        ->menus()
 
-        ->whereNull('parent_id')
+            ->menus()
 
-        ->with(['children'])
+            // SOLO ACTIVOS
+            ->where('status', 1)
 
-        ->orderBy('sort_order')
+            // SOLO MENUS PADRES
+            ->whereNull('parent_id')
 
-        ->get();
+            // HIJOS ACTIVOS
+            ->with([
+
+                'children' => function ($query) {
+                    $query
+                        ->where('status', 1)
+                        ->orderBy('sort_order');
+                }
+
+            ])
+
+            ->orderBy('sort_order')
+
+            ->get();
 
         return response()->json([
 

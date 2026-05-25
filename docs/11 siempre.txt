@@ -1,0 +1,16 @@
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan storage:link
+php artisan migrate
+php artisan serve
+
+http://localhost:8000/storage/app/public/products/images/1779328213_66.jpg 
+
+Borra el link actual
+
+En PowerShell:
+
+Remove-Item public\storage
+Créalo otra vez
+php artisan storage:link

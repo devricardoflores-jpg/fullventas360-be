@@ -53,109 +53,83 @@
                 }
             }
         },
-        "/categories": {
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar sesión",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "200": {
+                        "description": "Logout correcto"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Usuario autenticado",
+                "operationId": "8367feff40ba10e43187792cad3132c1",
+                "responses": {
+                    "200": {
+                        "description": "Usuario autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories": {
             "get": {
                 "tags": [
                     "Categories"
                 ],
                 "summary": "Listar categorías",
-                "operationId": "b1b247b2b491b0491c3c728dc33f23f0",
+                "operationId": "ac9c4d978ea4e5b72915ca9728e5b8b1",
                 "responses": {
                     "200": {
-                        "description": "Lista de categorías"
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Error interno"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Categories"
                 ],
                 "summary": "Registrar categoría",
-                "operationId": "c86cd7a85ad06a4fe905bfab62146952",
+                "operationId": "cca49a87d9b0ebb9a98ad7c154b71737",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
-                                    "description"
+                                    "name"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Electrónicos"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Productos electrónicos"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Categoría registrada"
-                    }
-                }
-            }
-        },
-        "/categories/{id}": {
-            "get": {
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Obtener categoría por ID",
-                "operationId": "486849467f411ec5e4bdf111f50ede87",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de la categoría",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Detalle categoría"
-                    },
-                    "404": {
-                        "description": "Categoría no encontrada"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Actualizar categoría",
-                "operationId": "b648463d94e0caf7b8d842a1008789b2",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID categoría",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Tecnología"
+                                        "example": "TECNOLOGÍA"
                                     },
                                     "description": {
                                         "type": "string",
@@ -168,22 +142,31 @@
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Categoría actualizada"
+                    "201": {
+                        "description": "Categoría creada"
+                    },
+                    "422": {
+                        "description": "Error validación"
                     }
-                }
-            },
-            "delete": {
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/categories/{id}": {
+            "get": {
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Eliminar categoría",
-                "operationId": "491dfe5b6b58b480181690ede6550e44",
+                "summary": "Obtener categoría",
+                "operationId": "09767bb2e47dde77dd1e2591428b0ae1",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID categoría",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -192,9 +175,220 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Categoría eliminada"
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "No encontrado"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Actualizar categoría",
+                "operationId": "7dcf71887e585de7f881e9eb98d86126",
+                "responses": {
+                    "200": {
+                        "description": "Actualizado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Eliminar categoría",
+                "operationId": "9b61b65823f4a21f182506b34ddf805c",
+                "responses": {
+                    "200": {
+                        "description": "Eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/category-sucursal": {
+            "get": {
+                "tags": [
+                    "CategorySucursal"
+                ],
+                "summary": "Listar relaciones categoría sucursal",
+                "operationId": "9a612da5df29c0dc3f7c866895cc6d64",
+                "parameters": [
+                    {
+                        "name": "sucursal_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "CategorySucursal"
+                ],
+                "summary": "Registrar relación categoría sucursal",
+                "operationId": "fedc58d5b4f87ee2f564d51d9479fbd4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "sucursal_id"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sucursal_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Asignación creada"
+                    },
+                    "422": {
+                        "description": "Error validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/category-sucursal/{id}": {
+            "get": {
+                "tags": [
+                    "CategorySucursal"
+                ],
+                "summary": "Obtener relación categoría sucursal",
+                "operationId": "55ac711e525e13bb46cb536e57abd174",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "CategorySucursal"
+                ],
+                "summary": "Actualizar relación categoría sucursal",
+                "operationId": "38324fbd39ee287f20805c3159ba9098",
+                "responses": {
+                    "200": {
+                        "description": "Actualizado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "CategorySucursal"
+                ],
+                "summary": "Eliminar relación categoría sucursal",
+                "operationId": "34bb49e19667437eb4417f4fdbcf712e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/clientes": {
@@ -429,6 +623,9 @@
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "500": {
+                        "description": "Error interno"
                     }
                 }
             },
@@ -438,12 +635,69 @@
                 ],
                 "summary": "Crear producto",
                 "operationId": "785644b7d7dd38af4b51dafd0fbc1b6d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "description",
+                                    "price",
+                                    "quantity",
+                                    "category_id",
+                                    "user_id",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "configuracion_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sucursal_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Laptop HP"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "i7 16GB RAM"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 2500
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "ACTIVO"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Creado"
+                        "description": "Producto creado"
                     },
                     "422": {
-                        "description": "Validación"
+                        "description": "Error de validación"
                     }
                 }
             }
@@ -453,8 +707,18 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Obtener producto",
+                "summary": "Detalle producto",
                 "operationId": "c87fb2e4d617e7b36c712cad358acdb8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -483,7 +747,7 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Eliminar producto lógico",
+                "summary": "Eliminar producto",
                 "operationId": "b49ce9f3cb168b233245548fb4ef36d3",
                 "responses": {
                     "200": {
@@ -495,13 +759,23 @@
                 }
             }
         },
-        "/api/product-images": {
+        "/api/producto_images": {
             "get": {
                 "tags": [
-                    "ProductImages"
+                    "Product Images"
                 ],
-                "summary": "Listar imágenes",
-                "operationId": "ad5d680a8c6fc2a581d259b150d27ce1",
+                "summary": "Listar imágenes de productos",
+                "operationId": "productoImages_index",
+                "parameters": [
+                    {
+                        "name": "product_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -510,60 +784,73 @@
             },
             "post": {
                 "tags": [
-                    "ProductImages"
+                    "Product Images"
                 ],
-                "summary": "Crear imagen de producto",
-                "operationId": "e64aba58e4a2a9f204adbc243b979674",
+                "summary": "Subir imagen de producto",
+                "operationId": "productoImages_store",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "product_id",
+                                    "image"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
-                        "description": "Creado"
+                        "description": "Imagen subida correctamente"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    },
+                    "500": {
+                        "description": "Error interno"
                     }
                 }
             }
         },
-        "/api/product-images/{id}": {
-            "get": {
-                "tags": [
-                    "ProductImages"
-                ],
-                "summary": "Obtener imagen",
-                "operationId": "0d3901c01195fd9613f9d335cd4529c7",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "404": {
-                        "description": "No encontrado"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "ProductImages"
-                ],
-                "summary": "Actualizar imagen",
-                "operationId": "3486d478bac22994c0429bfcd987f5e7",
-                "responses": {
-                    "200": {
-                        "description": "Actualizado"
-                    },
-                    "404": {
-                        "description": "No encontrado"
-                    }
-                }
-            },
+        "/api/producto_images/{id}": {
             "delete": {
                 "tags": [
-                    "ProductImages"
+                    "Product Images"
                 ],
-                "summary": "Eliminar imagen",
-                "operationId": "0ed26c564cc84e973785ac02239afbd9",
+                "summary": "Eliminar imagen de producto",
+                "operationId": "productoImages_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Eliminado"
+                        "description": "Imagen eliminada"
                     },
                     "404": {
                         "description": "No encontrado"
+                    },
+                    "500": {
+                        "description": "Error interno"
                     }
                 }
             }
@@ -1304,6 +1591,10 @@
             "description": "CRUD de Categorías"
         },
         {
+            "name": "CategorySucursal",
+            "description": "CRUD relación categoría sucursal"
+        },
+        {
             "name": "Menus",
             "description": "Menus dinámicos"
         },
@@ -1312,7 +1603,7 @@
             "description": "CRUD de Productos"
         },
         {
-            "name": "ProductImages",
+            "name": "Product Images",
             "description": "CRUD de imágenes de productos"
         },
         {

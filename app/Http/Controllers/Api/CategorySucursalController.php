@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+
+use App\Models\CategorySucursal;
 
 use Illuminate\Http\Request;
 
@@ -12,35 +13,52 @@ use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
-    name: "Categories",
-    description: "CRUD de Categorías"
+    name: "CategorySucursal",
+    description: "CRUD relación categoría sucursal"
 )]
 
-class CategoryController extends Controller
+class CategorySucursalController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | LISTAR CATEGORÍAS
+    | LISTAR
     |--------------------------------------------------------------------------
     */
 
     #[OA\Get(
-        path: "/api/categories",
-        summary: "Listar categorías",
-        tags: ["Categories"],
+        path: "/api/category-sucursal",
+        summary: "Listar relaciones categoría sucursal",
+        tags: ["CategorySucursal"],
 
         security: [["bearerAuth" => []]],
+
+        parameters: [
+
+            new OA\Parameter(
+                name: "sucursal_id",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(
+                    type: "integer"
+                )
+            ),
+
+            new OA\Parameter(
+                name: "category_id",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(
+                    type: "integer"
+                )
+            )
+
+        ],
 
         responses: [
 
             new OA\Response(
                 response: 200,
                 description: "OK"
-            ),
-
-            new OA\Response(
-                response: 500,
-                description: "Error interno"
             )
 
         ]
@@ -50,31 +68,27 @@ class CategoryController extends Controller
     {
         try {
 
-            Log::info(__METHOD__, [
+            $query = CategorySucursal::with([
 
-                'message' => 'CATEGORY - Listar categorías',
+                'category',
 
-                'filters' => $request->all()
+                'sucursal'
 
             ]);
 
-            $user = auth()->user();
-
-            $query = Category::query();
-
             /*
             |--------------------------------------------------------------------------
-            | ADMIN
+            | FILTRO CATEGORY
             |--------------------------------------------------------------------------
             */
 
-            if ($user->role_id == 1) {
+            if ($request->filled('category_id')) {
 
                 $query->where(
 
-                    'configuracion_id',
+                    'category_id',
 
-                    $user->configuracion_id
+                    $request->category_id
 
                 );
 
@@ -82,33 +96,31 @@ class CategoryController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | USUARIO NORMAL
+            | FILTRO SUCURSAL
             |--------------------------------------------------------------------------
             */
 
-            else {
+            if ($request->filled('sucursal_id')) {
 
                 $query->where(
 
-                    'configuracion_id',
+                    'sucursal_id',
 
-                    $user->configuracion_id
+                    $request->sucursal_id
 
                 );
 
             }
 
-            $categories = $query
-
+            $data = $query
                 ->latest()
-
                 ->get();
 
             return response()->json([
 
                 'success' => true,
 
-                'data' => $categories
+                'data' => $data
 
             ], 200);
 
@@ -138,9 +150,9 @@ class CategoryController extends Controller
     */
 
     #[OA\Post(
-        path: "/api/categories",
-        summary: "Registrar categoría",
-        tags: ["Categories"],
+        path: "/api/category-sucursal",
+        summary: "Registrar relación categoría sucursal",
+        tags: ["CategorySucursal"],
 
         security: [["bearerAuth" => []]],
 
@@ -150,20 +162,26 @@ class CategoryController extends Controller
 
             content: new OA\JsonContent(
 
-                required: ["name"],
+                required: [
+
+                    "category_id",
+
+                    "sucursal_id"
+
+                ],
 
                 properties: [
 
                     new OA\Property(
-                        property: "name",
-                        type: "string",
-                        example: "TECNOLOGÍA"
+                        property: "category_id",
+                        type: "integer",
+                        example: 1
                     ),
 
                     new OA\Property(
-                        property: "description",
-                        type: "string",
-                        example: "Productos tecnológicos"
+                        property: "sucursal_id",
+                        type: "integer",
+                        example: 2
                     )
 
                 ]
@@ -176,7 +194,7 @@ class CategoryController extends Controller
 
             new OA\Response(
                 response: 201,
-                description: "Categoría creada"
+                description: "Asignación creada"
             ),
 
             new OA\Response(
@@ -193,7 +211,7 @@ class CategoryController extends Controller
 
             Log::info(__METHOD__, [
 
-                'message' => 'CATEGORY - Registrar categoría',
+                'message' => 'CATEGORY_SUCURSAL - Registrar',
 
                 'request' => $request->all()
 
@@ -201,31 +219,61 @@ class CategoryController extends Controller
 
             $validated = $request->validate([
 
-                'name' =>
+                'category_id' =>
 
-                    'required|string|max:255',
+                    'required|integer|exists:categories,id',
 
-                'description' =>
+                'sucursal_id' =>
 
-                    'nullable|string|max:255'
+                    'required|integer|exists:sucursales,id'
 
             ]);
 
-            $user = auth()->user();
+            /*
+            |--------------------------------------------------------------------------
+            | VALIDAR DUPLICADO
+            |--------------------------------------------------------------------------
+            */
 
-            $category = Category::create([
+            $exists = CategorySucursal::where(
 
-                'configuracion_id' =>
+                'category_id',
 
-                    $user->configuracion_id,
+                $validated['category_id']
 
-                'name' =>
+            )
 
-                    $validated['name'],
+            ->where(
 
-                'description' =>
+                'sucursal_id',
 
-                    $validated['description'] ?? null
+                $validated['sucursal_id']
+
+            )
+
+            ->exists();
+
+            if ($exists) {
+
+                return response()->json([
+
+                    'success' => false,
+
+                    'message' => 'La relación ya existe'
+
+                ], 409);
+
+            }
+
+            $data = CategorySucursal::create([
+
+                'category_id' =>
+
+                    $validated['category_id'],
+
+                'sucursal_id' =>
+
+                    $validated['sucursal_id']
 
             ]);
 
@@ -233,9 +281,9 @@ class CategoryController extends Controller
 
                 'success' => true,
 
-                'message' => 'Categoría registrada correctamente',
+                'message' => 'Relación registrada correctamente',
 
-                'data' => $category
+                'data' => $data
 
             ], 201);
 
@@ -265,9 +313,9 @@ class CategoryController extends Controller
     */
 
     #[OA\Get(
-        path: "/api/categories/{id}",
-        summary: "Obtener categoría",
-        tags: ["Categories"],
+        path: "/api/category-sucursal/{id}",
+        summary: "Obtener relación categoría sucursal",
+        tags: ["CategorySucursal"],
 
         security: [["bearerAuth" => []]],
 
@@ -277,7 +325,9 @@ class CategoryController extends Controller
                 name: "id",
                 in: "path",
                 required: true,
-                schema: new OA\Schema(type: "integer")
+                schema: new OA\Schema(
+                    type: "integer"
+                )
             )
 
         ],
@@ -299,15 +349,21 @@ class CategoryController extends Controller
 
     public function show(string $id)
     {
-        $category = Category::find($id);
+        $data = CategorySucursal::with([
 
-        if (!$category) {
+            'category',
+
+            'sucursal'
+
+        ])->find($id);
+
+        if (!$data) {
 
             return response()->json([
 
                 'success' => false,
 
-                'message' => 'Categoría no encontrada'
+                'message' => 'Registro no encontrado'
 
             ], 404);
 
@@ -317,21 +373,21 @@ class CategoryController extends Controller
 
             'success' => true,
 
-            'data' => $category
+            'data' => $data
 
         ], 200);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE
+    | ACTUALIZAR
     |--------------------------------------------------------------------------
     */
 
     #[OA\Put(
-        path: "/api/categories/{id}",
-        summary: "Actualizar categoría",
-        tags: ["Categories"],
+        path: "/api/category-sucursal/{id}",
+        summary: "Actualizar relación categoría sucursal",
+        tags: ["CategorySucursal"],
 
         security: [["bearerAuth" => []]],
 
@@ -350,19 +406,22 @@ class CategoryController extends Controller
         ]
     )]
 
-    public function update(Request $request, string $id)
-    {
+    public function update(
+        Request $request,
+        string $id
+    ) {
+
         try {
 
-            $category = Category::find($id);
+            $data = CategorySucursal::find($id);
 
-            if (!$category) {
+            if (!$data) {
 
                 return response()->json([
 
                     'success' => false,
 
-                    'message' => 'Categoría no encontrada'
+                    'message' => 'Registro no encontrado'
 
                 ], 404);
 
@@ -370,25 +429,25 @@ class CategoryController extends Controller
 
             $validated = $request->validate([
 
-                'name' =>
+                'category_id' =>
 
-                    'sometimes|string|max:255',
+                    'sometimes|integer|exists:categories,id',
 
-                'description' =>
+                'sucursal_id' =>
 
-                    'nullable|string|max:255'
+                    'sometimes|integer|exists:sucursales,id'
 
             ]);
 
-            $category->update($validated);
+            $data->update($validated);
 
             return response()->json([
 
                 'success' => true,
 
-                'message' => 'Categoría actualizada correctamente',
+                'message' => 'Relación actualizada correctamente',
 
-                'data' => $category->fresh()
+                'data' => $data->fresh()
 
             ], 200);
 
@@ -413,16 +472,29 @@ class CategoryController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | DELETE
+    | ELIMINAR
     |--------------------------------------------------------------------------
     */
 
     #[OA\Delete(
-        path: "/api/categories/{id}",
-        summary: "Eliminar categoría",
-        tags: ["Categories"],
+        path: "/api/category-sucursal/{id}",
+        summary: "Eliminar relación categoría sucursal",
+        tags: ["CategorySucursal"],
 
         security: [["bearerAuth" => []]],
+
+        parameters: [
+
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(
+                    type: "integer"
+                )
+            )
+
+        ],
 
         responses: [
 
@@ -443,27 +515,27 @@ class CategoryController extends Controller
     {
         try {
 
-            $category = Category::find($id);
+            $data = CategorySucursal::find($id);
 
-            if (!$category) {
+            if (!$data) {
 
                 return response()->json([
 
                     'success' => false,
 
-                    'message' => 'Categoría no encontrada'
+                    'message' => 'Registro no encontrado'
 
                 ], 404);
 
             }
 
-            $category->delete();
+            $data->delete();
 
             return response()->json([
 
                 'success' => true,
 
-                'message' => 'Categoría eliminada correctamente'
+                'message' => 'Relación eliminada correctamente'
 
             ], 200);
 

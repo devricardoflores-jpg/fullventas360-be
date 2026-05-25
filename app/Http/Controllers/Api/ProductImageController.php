@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-
 use App\Models\ProductImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -13,240 +12,130 @@ use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(
-    name: "ProductImages",
+    name: "Product Images",
     description: "CRUD de imágenes de productos"
 )]
-
 class ProductImageController extends Controller
 {
-   #[OA\Get(
-        path: "/api/product-images",
-        summary: "Listar imágenes",
-        tags: ["ProductImages"],
+    /* ================= LISTAR ================= */
+    #[OA\Get(
+        path: "/api/producto_images",
+        operationId: "productoImages_index",
+        summary: "Listar imágenes de productos",
+        tags: ["Product Images"],
+        parameters: [
+            new OA\Parameter(
+                name: "product_id",
+                in: "query",
+                required: false,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
         responses: [
             new OA\Response(response: 200, description: "OK")
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        return ProductImage::all();
+        Log::info('PRODUCT IMAGE - LISTAR', $request->all());
+
+        $query = ProductImage::query();
+
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        $images = $query->orderByDesc('id')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $images
+        ]);
     }
 
+    /* ================= SUBIR IMAGEN ================= */
     #[OA\Post(
-        path: "/api/product-images",
-        summary: "Crear imagen de producto",
-        tags: ["ProductImages"],
+        path: "/api/producto_images",
+        operationId: "productoImages_store",
+        summary: "Subir imagen de producto",
+        tags: ["Product Images"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    required: ["product_id", "image"],
+                    properties: [
+                        new OA\Property(property: "product_id", type: "integer", example: 1),
+                        new OA\Property(property: "image", type: "string", format: "binary")
+                    ]
+                )
+            )
+        ),
         responses: [
-            new OA\Response(response: 201, description: "Creado")
+            new OA\Response(response: 201, description: "Imagen subida correctamente"),
+            new OA\Response(response: 422, description: "Error de validación"),
+            new OA\Response(response: 500, description: "Error interno")
         ]
     )]
     public function store(Request $request)
     {
-      $request->validate([
-        'product_id' => 'required',
-        'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
-    ]);
-
-    try {
-
-        // =========================
-        // CREAR CARPETA
-        // =========================
-
-        Storage::disk('public')
-            ->makeDirectory('products/images');
-
-        // =========================
-        // GUARDAR IMAGEN
-        // =========================
-
-        $file = $request->file('image');
-
-        $filename =
-            time().'_'.$file->getClientOriginalName();
-
-        $path = $file->storeAs(
-            'products/images',
-            $filename,
-            'public'
-        );
-
-        // =========================
-        // GUARDAR BD
-        // =========================
-
-        $image = ProductImage::create([
-
-            'product_id' => $request->product_id,
-
-            'image_path' => 'storage/'.$path,
-
-            'created_at' => time(),
-
-            'update_at' => time()
-
+        $request->validate([
+            'product_id' => 'required|integer',
+            'image' => 'required|image|max:2048'
         ]);
 
-        return response()->json([
+        try {
 
-            'success' => true,
+            $path = $request->file('image')->store('products', 'public');
 
-            'message' => 'Imagen subida',
+            $image = ProductImage::create([
+                'product_id' => $request->product_id,
+                'image_path' => 'storage/' . $path
+            ]);
 
-            'data' => $image
+            Log::info('PRODUCT IMAGE - CREATED', [
+                'product_id' => $request->product_id,
+                'image_id' => $image->id
+            ]);
 
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Imagen subida correctamente',
+                'data' => $image
+            ], 201);
 
-    } catch (\Exception $e) {
+        } catch (\Exception $e) {
 
-        return response()->json([
+            Log::error('PRODUCT IMAGE ERROR', [
+                'message' => $e->getMessage()
+            ]);
 
-            'success' => false,
-
-            'error' => $e->getMessage()
-
-        ], 500);
-    }
-}
-
-
-    #[OA\Get(
-        path: "/api/product-images/{id}",
-        summary: "Obtener imagen",
-        tags: ["ProductImages"],
-        responses: [
-            new OA\Response(response: 200, description: "OK"),
-            new OA\Response(response: 404, description: "No encontrado")
-        ]
-    )]
-    public function show($id)
-    {
-        $image = ProductImage::find($id);
-
-        if (!$image) {
             return response()->json([
                 'success' => false,
-                'message' => 'No encontrado'
-            ], 404);
+                'message' => 'Error al subir imagen'
+            ], 500);
         }
-
-        return $image;
     }
 
-    #[OA\Put(
-        path: "/api/product-images/{id}",
-        summary: "Actualizar imagen",
-        tags: ["ProductImages"],
-        responses: [
-            new OA\Response(response: 200, description: "Actualizado"),
-            new OA\Response(response: 404, description: "No encontrado")
-        ]
-    )]
-    public function update(Request $request, $id)
-    {
-        $image = ProductImage::find($id);
-
-    if (!$image) {
-
-        return response()->json([
-
-            'success' => false,
-
-            'message' => 'Imagen no encontrada'
-
-        ], 404);
-    }
-
-    $request->validate([
-
-        'image' =>
-        'required|image|mimes:jpg,jpeg,png,webp|max:2048'
-
-    ]);
-
-    try {
-
-        // =========================
-        // ELIMINAR IMAGEN ANTERIOR
-        // =========================
-
-        $oldPath = str_replace(
-            'storage/',
-            '',
-            $image->image_path
-        );
-
-        if (
-            Storage::disk('public')
-                ->exists($oldPath)
-        ) {
-
-            Storage::disk('public')
-                ->delete($oldPath);
-        }
-
-        // =========================
-        // NUEVA IMAGEN
-        // =========================
-
-        $file = $request->file('image');
-
-        $filename =
-            time().'_'.$file->getClientOriginalName();
-
-        $path = $file->storeAs(
-
-            'products/images',
-
-            $filename,
-
-            'public'
-        );
-
-        // =========================
-        // UPDATE BD
-        // =========================
-
-        $image->update([
-
-            'image_path' =>
-                'storage/'.$path,
-
-            'update_at' =>
-                time()
-
-        ]);
-
-        return response()->json([
-
-            'success' => true,
-
-            'message' =>
-                'Imagen actualizada',
-
-            'data' => $image
-
-        ]);
-
-    } catch (\Exception $e) {
-
-        return response()->json([
-
-            'success' => false,
-
-            'error' => $e->getMessage()
-
-        ], 500);
-    }
-}
-
+    /* ================= ELIMINAR ================= */
     #[OA\Delete(
-        path: "/api/product-images/{id}",
-        summary: "Eliminar imagen",
-        tags: ["ProductImages"],
+        path: "/api/producto_images/{id}",
+        operationId: "productoImages_delete",
+        summary: "Eliminar imagen de producto",
+        tags: ["Product Images"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer")
+            )
+        ],
         responses: [
-            new OA\Response(response: 200, description: "Eliminado"),
-            new OA\Response(response: 404, description: "No encontrado")
+            new OA\Response(response: 200, description: "Imagen eliminada"),
+            new OA\Response(response: 404, description: "No encontrado"),
+            new OA\Response(response: 500, description: "Error interno")
         ]
     )]
     public function destroy($id)
@@ -256,15 +145,31 @@ class ProductImageController extends Controller
         if (!$image) {
             return response()->json([
                 'success' => false,
-                'message' => 'No encontrado'
+                'message' => 'Imagen no encontrada'
             ], 404);
         }
 
-        $image->delete();
+        try {
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Eliminado'
-        ]);
+            $filePath = str_replace('storage/', 'public/', $image->image_path);
+
+            if (Storage::exists($filePath)) {
+                Storage::delete($filePath);
+            }
+
+            $image->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Imagen eliminada correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar imagen'
+            ], 500);
+        }
     }
 }

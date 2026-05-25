@@ -2,69 +2,53 @@
 
 namespace App\Models;
 
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ProductImage;
 
 class Product extends Model
 {
-    protected $table = 'Products';
+   use HasFactory;
 
-    protected $primaryKey = 'id';
-
-    public $timestamps = false;
+    protected $table = 'products';
 
     protected $fillable = [
+        'configuracion_id',
+        'sucursal_id',
+        'category_id',
         'user_id',
         'name',
         'description',
         'price',
         'quantity',
-        'category_id',
         'status',
-        'created_at',
-        'update_at',
         'barcode',
-        'qrcode'
+        'qrcode',
+        'created_at',
+        'updated_at'
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIPS
-    |--------------------------------------------------------------------------
-    */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'price' => 'decimal:2'
+    ];
 
-    // Un producto pertenece a un usuario
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
-    }
+    /* ================= RELACIONES ================= */
 
-    // Un producto pertenece a una categoría
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id', 'id');
+        return $this->belongsTo(Category::class);
     }
 
-    // Un producto tiene muchas imágenes
     public function images()
     {
-        return $this->hasMany(ProductImage::class, 'product_id', 'id');
+        return $this->hasMany(ProductImage::class);
     }
 
-    // Un producto tiene muchos detalles de compra
-    public function detalleCompras()
+    public function user()
     {
-        return $this->hasMany(DetalleCompra::class, 'product_id', 'id');
-    }
-
-    // Un producto tiene muchos detalles de venta
-    public function detalleVentas()
-    {
-        return $this->hasMany(DetalleVenta::class, 'product_id', 'id');
-    }
-
-    // Un producto tiene muchos movimientos de inventario
-    public function inventories()
-    {
-        return $this->hasMany(Inventory::class, 'product_id', 'id');
+        return $this->belongsTo(User::class);
     }
 }

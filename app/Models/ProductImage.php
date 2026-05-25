@@ -2,33 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductImage extends Model
 {
-    //
-      protected $table = 'product_image';
+    use HasFactory;
 
-    protected $primaryKey = 'id';
-
-    public $timestamps = false;
+    protected $table = 'product_image';
 
     protected $fillable = [
         'product_id',
         'image_path',
         'created_at',
-        'update_at'
+        'updated_at'
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIPS
-    |--------------------------------------------------------------------------
-    */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
+    ];
 
-    // Una imagen pertenece a un producto
+    /* ================= RELACIONES ================= */
+
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id', 'id');
+        return $this->belongsTo(Product::class);
     }
 }

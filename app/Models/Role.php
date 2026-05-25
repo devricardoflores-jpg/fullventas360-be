@@ -3,45 +3,59 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Role extends Model
 {
-    //
-     protected $table = 'roles';
+    use HasFactory;
 
-    protected $primaryKey = 'id';
+    protected $table = 'roles';
 
     public $timestamps = false;
 
     protected $fillable = [
         'name',
-        'description'
+        'description',
+        'configuracion_id',
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | RELATIONSHIPS
+    | RELACIONES
     |--------------------------------------------------------------------------
     */
+
+    // Un rol pertenece a una configuración/empresa
+    public function configuracion()
+    {
+        return $this->belongsTo(Configuracion::class);
+    }
 
     // Un rol tiene muchos usuarios
     public function users()
     {
-        return $this->hasMany(User::class, 'role_id', 'id');
+        return $this->hasMany(User::class);
     }
 
+    // Relación muchos a muchos con menus
     public function menus()
-{
-    return $this->belongsToMany(
+    {
+        return $this->belongsToMany(
+            Menu::class,
+            'role_menu',
+            'role_id',
+            'menu_id'
+        );
+    }
 
-        Menu::class,
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES
+    |--------------------------------------------------------------------------
+    */
 
-        'role_menu',
-
-        'role_id',
-
-        'menu_id'
-
-    );
-}
+    public function scopeByConfiguracion($query, $configuracionId)
+    {
+        return $query->where('configuracion_id', $configuracionId);
+    }
 }

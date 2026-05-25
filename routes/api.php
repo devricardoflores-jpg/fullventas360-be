@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CategorySucursalController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\UserController;
@@ -45,7 +46,16 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
     Route::apiResource('categories', CategoryController::class);
+  /*
+    |--------------------------------------------------------------------------
+    | CATEGORY SUCURSAL
+    |--------------------------------------------------------------------------
+    */
 
+    Route::apiResource(
+        'category-sucursal',
+        CategorySucursalController::class
+    );
     /*
     |--------------------------------------------------------------------------
     | Roles
@@ -69,6 +79,6 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::apiResource('clientes', CustomerController::class);
 
     Route::apiResource('products', ProductController::class);
-    Route::apiResource('product-images', ProductImageController::class);
+    Route::apiResource('producto_images', ProductImageController::class);
 
 });
